@@ -1,0 +1,293 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body[data-page="login"] {
+  min-height: 100vh;
+  padding: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.76), rgba(255, 255, 255, 0.88)),
+    url("https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=1600&q=80");
+  background-position: center;
+  background-size: cover;
+  color: #111;
+  font-family: Arial, sans-serif;
+}
+
+/* React mounts the page inside #root, so mirror the original body's full-width
+   direct-child layout before applying the login card's max width. */
+#root {
+  width: 100%;
+}
+
+@scope (.login-page) {
+
+.login-wrapper {
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+.login-card {
+  padding: 32px 30px 30px;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 30px 80px rgba(30, 24, 44, 0.18);
+  backdrop-filter: blur(18px);
+}
+
+.brand-corner {
+  position: fixed;
+  top: 22px;
+  left: 22px;
+  display: flex;
+  padding: 8px 12px;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: 0 14px 34px rgba(30, 24, 44, 0.12);
+  font-size: 12px;
+  font-weight: 800;
+  backdrop-filter: blur(14px);
+}
+
+.brand-logo {
+  display: flex;
+  margin-bottom: 24px;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.stack-logo {
+  width: 72px;
+  height: auto;
+  flex: none;
+}
+
+.wordmark {
+  color: #000;
+  font-size: 42px;
+  font-weight: 900;
+  line-height: 0.84;
+  letter-spacing: 0;
+}
+
+.wordmark span {
+  display: block;
+}
+
+h1 {
+  margin-bottom: 8px;
+  text-align: center;
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.subtitle {
+  margin-bottom: 28px;
+  color: rgba(17, 17, 17, 0.58);
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.helper-text {
+  min-height: 16px;
+  margin-top: 5px;
+  color: #d82b6f;
+  font-size: 11px;
+  line-height: 16px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  color: rgba(17, 17, 17, 0.72);
+  font-size: 13px;
+}
+
+input {
+  width: 100%;
+  height: 50px;
+  padding: 0 16px;
+  border: 1px solid rgba(17, 17, 17, 0.12);
+  border-radius: 14px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.72);
+  color: #111;
+  font-size: 15px;
+  transition: 0.2s ease;
+}
+
+input::placeholder {
+  color: rgba(17, 17, 17, 0.36);
+}
+
+input:focus {
+  border-color: #eb4aa0;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(235, 74, 160, 0.16);
+}
+
+.options {
+  display: flex;
+  margin: 6px 0 24px;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.remember {
+  display: flex;
+  margin-bottom: 0;
+  align-items: center;
+  gap: 8px;
+  color: rgba(17, 17, 17, 0.62);
+}
+
+.remember input {
+  width: 15px;
+  height: 15px;
+  accent-color: #eb4aa0;
+}
+
+.forgot {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #7428f4;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.forgot:hover {
+  text-decoration: underline;
+}
+
+.login-button {
+  width: 100%;
+  height: 52px;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #eb4aa0, #7428f4 56%, #63ddcf);
+  box-shadow: 0 14px 32px rgba(116, 40, 244, 0.24);
+  color: #fff;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+  transition: 0.2s ease;
+}
+
+.login-button:hover {
+  box-shadow: 0 18px 42px rgba(235, 74, 160, 0.28);
+  transform: translateY(-2px);
+}
+
+.divider {
+  display: flex;
+  margin: 28px 0;
+  align-items: center;
+  gap: 14px;
+  color: rgba(17, 17, 17, 0.38);
+  font-size: 13px;
+}
+
+.divider::before,
+.divider::after {
+  height: 1px;
+  flex: 1;
+  background: rgba(17, 17, 17, 0.1);
+  content: "";
+}
+
+.social-login {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.social-button {
+  height: 46px;
+  border: 1px solid rgba(17, 17, 17, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.58);
+  color: #111;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s ease;
+}
+
+.social-button:hover {
+  background: #fff;
+}
+
+.signup {
+  margin-top: 28px;
+  color: rgba(17, 17, 17, 0.58);
+  text-align: center;
+  font-size: 14px;
+}
+
+.signup a {
+  color: #eb4aa0;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.signup a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  body[data-page="login"] {
+    padding: 20px;
+  }
+
+  .brand-corner {
+    top: 14px;
+    left: 14px;
+    transform: scale(0.86);
+    transform-origin: top left;
+  }
+
+  .login-card {
+    padding: 34px 22px;
+  }
+
+  h1 {
+    font-size: 26px;
+  }
+
+  .brand-logo {
+    gap: 10px;
+  }
+
+  .stack-logo {
+    width: 70px;
+  }
+
+  .wordmark {
+    font-size: 41px;
+  }
+
+  .social-login {
+    grid-template-columns: 1fr;
+  }
+}
+
+}
