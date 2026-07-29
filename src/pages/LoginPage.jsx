@@ -119,7 +119,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <div className="options">
+        {/* <div className="options">
           <label className="remember">
             <input type="checkbox" />
             로그인 유지
@@ -128,7 +128,7 @@ export default function LoginPage() {
           <button type="button" className="forgot">
             비밀번호 찾기
           </button>
-        </div>
+        </div> */}
 
         <button type="submit" className="login-button">
           로그인
