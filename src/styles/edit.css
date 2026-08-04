@@ -515,7 +515,7 @@ textarea {
 
 .helper-text { min-height: 18px; margin: 10px 3px 0; color: #d82b6f; font-size: 11px; }
 
-.form-actions { display: grid; margin-top: 17px; grid-template-columns: 112px minmax(0, 1fr); gap: 9px; }
+.form-actions { display: grid; margin-top: 17px; grid-template-columns: 112px 112px minmax(0, 1fr); gap: 9px; }
 .cancel-button,
 .submit-button { display: flex; height: 48px; align-items: center; justify-content: center; border: 0; border-radius: 14px; font-size: 13px; font-weight: 900; text-decoration: none; }
 .cancel-button { background: rgba(17, 17, 17, 0.065); color: rgba(17, 17, 17, 0.62); }
@@ -569,11 +569,58 @@ textarea {
   .music-result-item { grid-template-columns: 42px minmax(0, 1fr); }
   .music-result-item img { width: 42px; height: 42px; }
   .music-result-select { display: none; }
-  .form-actions { grid-template-columns: 90px minmax(0, 1fr); }
+  .form-actions { grid-template-columns: 86px 86px minmax(0, 1fr); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
 }
+
+.draft-modal {
+  position: fixed;
+  z-index: 60;
+  top: 50%;
+  left: 50%;
+  width: min(420px, calc(100vw - 40px));
+  max-width: none;
+  margin: 0;
+  padding: 34px 32px 30px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 28px 70px rgba(30, 24, 44, 0.24);
+  color: var(--ink);
+  text-align: center;
+  transform: translate(-50%, -50%);
+}
+
+.draft-modal::backdrop {
+  background: rgba(30, 24, 44, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.draft-modal-icon {
+  display: flex;
+  width: 42px;
+  height: 42px;
+  margin: 0 auto 18px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(235, 74, 160, 0.1);
+  color: var(--pink);
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.draft-modal h2 { margin-bottom: 10px; font-size: 20px; }
+.draft-modal p { margin-bottom: 12px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.draft-modal p.draft-modal-caution { margin-bottom: 25px; color: #d82b6f; }
+
+.draft-modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.draft-modal-actions button { height: 44px; border: 0; border-radius: 13px; cursor: pointer; font-size: 13px; font-weight: 800; }
+.draft-modal-cancel { background: rgba(17, 17, 17, 0.07); color: rgba(17, 17, 17, 0.7); }
+.draft-modal-confirm { background: linear-gradient(135deg, var(--pink), var(--purple)); box-shadow: 0 10px 22px rgba(116, 40, 244, 0.2); color: #ffffff; }
 
 }

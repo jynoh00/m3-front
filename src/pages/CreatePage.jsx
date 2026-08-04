@@ -1,9 +1,35 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import EditorPageLayout from "../components/editor/EditorPageLayout";
+import DraftNoticeDialog from "../components/editor/DraftNoticeDialog";
 import MusicPostEditor from "../components/MusicPostEditor";
 import { apiRequest } from "../lib/api";
 import "../styles/create.css";
 
 export default function CreatePage() {
+  const navigate = useNavigate();
+  const [draftMessage, setDraftMessage] = useState(null);
+  const [draftAcknowledged, setDraftAcknowledged] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    apiRequest("/posts/new")
+      .then((result) => {
+        if (!active) return;
+        if (result.data?.has_temp_post) {
+          setDraftMessage(result.data.message);
+        }
+      })
+      .catch(() => {
+        // 임시저장 여부 확인에 실패해도 새 글 작성 자체는 계속 진행한다.
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <EditorPageLayout
       pageClassName="create-page"
@@ -11,6 +37,13 @@ export default function CreatePage() {
       title="새로운 음악 순간"
       description="이야기와 함께 기억하고 싶은 음악을 골라보세요."
     >
+      <DraftNoticeDialog
+        open={Boolean(draftMessage) && !draftAcknowledged}
+        message={draftMessage}
+        onContinue={() => setDraftAcknowledged(true)}
+        onDismiss={() => navigate("/posts", { replace: true })}
+      />
+
       <MusicPostEditor
         mode="create"
         onSubmit={async (payload) => {
@@ -19,6 +52,12 @@ export default function CreatePage() {
             body: JSON.stringify(payload),
           });
           return "모멘트가 등록되었습니다.";
+        }}
+        onSaveDraft={async (payload) => {
+          await apiRequest("/posts/temp", {
+            method: "POST",
+            body: JSON.stringify(payload),
+          });
         }}
       />
     </EditorPageLayout>
