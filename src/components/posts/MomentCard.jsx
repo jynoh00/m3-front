@@ -31,7 +31,7 @@ export default function MomentCard({ post, onOpen }) {
 
         <div className="post-copy">
           <h2>{post.post_title}</h2>
-          <p className="post-excerpt">{post.post_content}</p>
+          {post.post_content && <p className="post-excerpt">{post.post_content}</p>}
           <div className="recommended-track">
             <span className="track-title">{post.music_title}</span>
           </div>

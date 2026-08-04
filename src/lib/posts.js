@@ -16,7 +16,8 @@ export const normalizePost = (post) => {
     ...post,
     post_id: String(post.post_id),
     post_title: post.post_title || "제목 없는 모멘트",
-    post_content: normalizePostContent(post.post_content ?? "공유된 내용이 없습니다."),
+    // post_content는 목록(PostSummaryDTO)에는 아예 없는 필드다 — 상세 조회로 병합됐을 때만 값이 있다.
+    post_content: post.post_content != null ? normalizePostContent(post.post_content) : undefined,
     music_title: music?.music_title || post.music_title || "추천 음악 미등록",
     cover_image: music?.cover_image || post.cover_image || FALLBACK_IMAGE,
     artist_name: artistNames || "아티스트 정보 없음",

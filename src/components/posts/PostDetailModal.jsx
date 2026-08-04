@@ -60,14 +60,13 @@ export default function PostDetailModal({
               </div>
 
               <div className="detail-post-actions">
-                {isOwner ? (
+                {isOwner && (
                   <>
                     <button className="detail-outline-button" type="button" onClick={onEditPost}>수정</button>
                     <button className="detail-outline-button is-delete" type="button" onClick={onDeletePost}>삭제</button>
                   </>
-                ) : (
-                  <button className="detail-outline-button is-delete" type="button" onClick={onOpenReport}>신고</button>
                 )}
+                <button className="detail-outline-button is-delete" type="button" onClick={onOpenReport}>신고</button>
               </div>
             </div>
           </header>
