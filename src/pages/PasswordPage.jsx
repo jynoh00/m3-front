@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import UserHeader from "../components/UserHeader";
-import { ApiError, apiRequest } from "../lib/api";
+import { apiRequest } from "../lib/api";
 import { clearTokens } from "../lib/auth";
+import { describeError } from "../lib/errorMessages";
 import "../styles/password.css";
 
 export default function PasswordPage() {
@@ -21,7 +22,7 @@ export default function PasswordPage() {
       clearTokens();
       navigate("/login", { replace: true });
     } catch (error) {
-      setErrors({ password: "", confirm: error instanceof ApiError ? `* ${error.message}` : "* 서버에 연결할 수 없습니다." });
+      setErrors({ password: "", confirm: `* ${describeError(error, "서버에 연결할 수 없습니다.")}` });
     }
   };
   return (

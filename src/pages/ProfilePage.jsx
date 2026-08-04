@@ -5,6 +5,7 @@ import WithdrawModal from "../components/profile/WithdrawModal";
 import { useAuth } from "../context/AuthContext";
 import { ApiError, apiRequest } from "../lib/api";
 import { clearTokens } from "../lib/auth";
+import { describeError } from "../lib/errorMessages";
 import "../styles/profile.css";
 
 export default function ProfilePage() {
@@ -48,7 +49,7 @@ export default function ProfilePage() {
       setError("");
     } catch (requestError) {
       if (requestError instanceof ApiError && requestError.status === 409) return setError("* 이미 사용 중인 닉네임입니다.");
-      setError(`* ${requestError instanceof Error ? requestError.message : "서버에 연결할 수 없습니다."}`);
+      setError(`* ${describeError(requestError, "서버에 연결할 수 없습니다.")}`);
     }
   };
 
@@ -58,7 +59,7 @@ export default function ProfilePage() {
       clearTokens();
       navigate("/login", { replace: true });
     }
-    catch (requestError) { window.alert(requestError instanceof Error ? requestError.message : "회원탈퇴에 실패했습니다."); }
+    catch (requestError) { window.alert(describeError(requestError, "회원탈퇴에 실패했습니다.")); }
   };
 
   return (

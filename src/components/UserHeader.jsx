@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { apiRequest } from "../lib/api";
-import { clearTokens, getAccessToken } from "../lib/auth";
+import { clearTokens, getRefreshToken } from "../lib/auth";
 
 export default function UserHeader({ back = false }) {
   const navigate = useNavigate();
@@ -10,8 +10,15 @@ export default function UserHeader({ back = false }) {
 
   const logout = async () => {
     try {
-      if (getAccessToken()) {
-        await apiRequest("/logout", { method: "POST", redirectOn401: false });
+      const refreshToken = getRefreshToken();
+      if (refreshToken) {
+        // 백엔드 /logout은 refresh token을 Authorization 헤더로 기대한다.
+        await apiRequest("/logout", {
+          method: "POST",
+          auth: false,
+          redirectOn401: false,
+          headers: { Authorization: `Bearer ${refreshToken}` },
+        });
       }
     } catch {
       // Local logout still completes when the server is unavailable.

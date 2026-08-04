@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ApiError, apiRequest } from "../lib/api";
+import { FALLBACK_IMAGE } from "../lib/constants";
 import "../styles/join.css";
 
 export default function JoinPage() {
@@ -36,7 +37,7 @@ export default function JoinPage() {
     else if (!/^\S+$/.test(values.nickname)) next.nickname = "* 닉네임에는 공백을 사용할 수 없습니다.";
     if (Object.keys(next).length) return setErrors(next);
     try {
-      await apiRequest("/join", { method: "POST", auth: false, body: JSON.stringify({ user_email: values.email, user_password: values.password, user_password_check: values.confirm, user_nickname: values.nickname, user_image: preview || "/images/default-profile.png" }) });
+      await apiRequest("/join", { method: "POST", auth: false, body: JSON.stringify({ user_email: values.email, user_password: values.password, user_password_check: values.confirm, user_nickname: values.nickname, user_image: preview || FALLBACK_IMAGE }) });
       navigate("/login", { replace: true });
     } catch (requestError) {
       if (requestError instanceof ApiError && requestError.status === 409) {

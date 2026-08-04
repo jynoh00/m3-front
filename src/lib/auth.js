@@ -5,9 +5,16 @@ export const AUTH_REQUIRED_EVENT = "auth:required";
 export const getAccessToken = () =>
   typeof window === "undefined" ? null : localStorage.getItem(ACCESS_TOKEN_KEY);
 
+export const getRefreshToken = () =>
+  typeof window === "undefined" ? null : localStorage.getItem(REFRESH_TOKEN_KEY);
+
 export const saveTokens = (tokens) => {
   localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
   localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
+};
+
+export const saveAccessToken = (accessToken) => {
+  localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
 };
 
 export const clearTokens = () => {
