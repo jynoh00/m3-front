@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import EditorPageLayout from "../components/editor/EditorPageLayout";
 import DraftNoticeDialog from "../components/editor/DraftNoticeDialog";
 import MusicPostEditor from "../components/MusicPostEditor";
@@ -7,9 +6,9 @@ import { apiRequest } from "../lib/api";
 import "../styles/create.css";
 
 export default function CreatePage() {
-  const navigate = useNavigate();
   const [draftMessage, setDraftMessage] = useState(null);
   const [draftAcknowledged, setDraftAcknowledged] = useState(false);
+  const [loadedDraft, setLoadedDraft] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -30,6 +29,16 @@ export default function CreatePage() {
     };
   }, []);
 
+  const loadDraft = async () => {
+    const result = await apiRequest("/posts/temp");
+    setLoadedDraft({
+      post_title: result.data.post_title,
+      post_content: result.data.post_content,
+      music: result.data.music,
+    });
+    setDraftAcknowledged(true);
+  };
+
   return (
     <EditorPageLayout
       pageClassName="create-page"
@@ -40,12 +49,13 @@ export default function CreatePage() {
       <DraftNoticeDialog
         open={Boolean(draftMessage) && !draftAcknowledged}
         message={draftMessage}
-        onContinue={() => setDraftAcknowledged(true)}
-        onDismiss={() => navigate("/posts", { replace: true })}
+        onLoad={loadDraft}
+        onDismiss={() => setDraftAcknowledged(true)}
       />
 
       <MusicPostEditor
         mode="create"
+        initialPost={loadedDraft}
         onSubmit={async (payload) => {
           await apiRequest("/posts", {
             method: "POST",

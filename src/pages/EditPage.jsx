@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import EditorPageLayout from "../components/editor/EditorPageLayout";
 import DraftNoticeDialog from "../components/editor/DraftNoticeDialog";
 import MusicPostEditor from "../components/MusicPostEditor";
@@ -9,12 +9,12 @@ import "../styles/edit.css";
 
 export default function EditPage() {
   const { postId } = useParams();
-  const navigate = useNavigate();
 
   const [post, setPost] = useState(null);
   const [error, setError] = useState("");
   const [draftMessage, setDraftMessage] = useState(null);
   const [draftAcknowledged, setDraftAcknowledged] = useState(false);
+  const [loadedDraft, setLoadedDraft] = useState(null);
 
   useEffect(() => {
     if (!postId) {
@@ -27,6 +27,7 @@ export default function EditPage() {
     setError("");
     setDraftMessage(null);
     setDraftAcknowledged(false);
+    setLoadedDraft(null);
 
     apiRequest(`/posts/${postId}/edit`, {
       signal: controller.signal,
@@ -50,6 +51,16 @@ export default function EditPage() {
     return () => controller.abort();
   }, [postId]);
 
+  const loadDraft = async () => {
+    const result = await apiRequest(`/posts/${postId}/temp`);
+    setLoadedDraft({
+      post_title: result.data.post_title,
+      post_content: result.data.post_content,
+      music: result.data.music,
+    });
+    setDraftAcknowledged(true);
+  };
+
   return (
     <EditorPageLayout
       pageClassName="edit-page"
@@ -60,8 +71,8 @@ export default function EditPage() {
       <DraftNoticeDialog
         open={Boolean(draftMessage) && !draftAcknowledged}
         message={draftMessage}
-        onContinue={() => setDraftAcknowledged(true)}
-        onDismiss={() => navigate("/posts", { replace: true })}
+        onLoad={loadDraft}
+        onDismiss={() => setDraftAcknowledged(true)}
       />
 
       {error ? (
@@ -69,7 +80,7 @@ export default function EditPage() {
       ) : post ? (
         <MusicPostEditor
           mode="edit"
-          initialPost={post}
+          initialPost={loadedDraft || post}
           onSubmit={async (payload) => {
             await apiRequest(`/posts/${postId}`, {
               method: "PATCH",
