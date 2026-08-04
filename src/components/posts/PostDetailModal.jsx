@@ -5,6 +5,9 @@ export default function PostDetailModal({
   dialogRef,
   post,
   comments,
+  commentsHasNext,
+  commentsLoadingMore,
+  onLoadMoreComments,
   comment,
   editingId,
   editingContent,
@@ -134,6 +137,17 @@ export default function PostDetailModal({
                 <p className="detail-comment-empty">첫 댓글을 남겨보세요.</p>
               )}
             </div>
+
+            {commentsHasNext && (
+              <button
+                className="detail-comment-load-more"
+                type="button"
+                disabled={commentsLoadingMore}
+                onClick={onLoadMoreComments}
+              >
+                {commentsLoadingMore ? "불러오는 중" : "댓글 더 보기"}
+              </button>
+            )}
           </section>
         </div>
       </article>

@@ -19,6 +19,8 @@ export default function PostsPage() {
   const [loadError, setLoadError] = useState("");
   const [active, setActive] = useState(null);
   const [comments, setComments] = useState([]);
+  const [commentsHasNext, setCommentsHasNext] = useState(false);
+  const [commentsLoadingMore, setCommentsLoadingMore] = useState(false);
   const [comment, setComment] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editingContent, setEditingContent] = useState("");
@@ -33,6 +35,8 @@ export default function PostsPage() {
   const nextPage = useRef(1);
   const requestInFlight = useRef(false);
   const hasNextPage = useRef(true);
+  const commentsLoadedPages = useRef(0);
+  const commentsHasNextPage = useRef(false);
   const navigate = useNavigate();
 
   const showToast = (message) => {
@@ -117,28 +121,73 @@ export default function PostsPage() {
     if (!reportOpen && dialog.open) dialog.close();
   }, [reportOpen]);
 
+  const fetchCommentsPages = async (postId, pageCount) => {
+    let items = [];
+    let lastData = null;
+
+    for (let page = 1; page <= pageCount; page += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      const result = await apiRequest(`/posts/${postId}/comments?page=${page}`);
+      lastData = result.data;
+      items = items.concat((result.data?.comments || []).map(normalizeComment));
+    }
+
+    return { items, lastData };
+  };
+
   const openDetail = async (post) => {
     setActive(post);
     setComments([]);
     setEditingId(null);
     setReportOpen(false);
     setReportReason("");
+    commentsLoadedPages.current = 0;
+    commentsHasNextPage.current = false;
+    setCommentsHasNext(false);
 
     try {
       const [detail, commentResult] = await Promise.all([
         apiRequest(`/posts/${post.post_id}`),
-        apiRequest(`/posts/${post.post_id}/comments`),
+        apiRequest(`/posts/${post.post_id}/comments?page=1`),
       ]);
       const nextPost = normalizePost({ ...post, ...detail.data });
       const nextComments = (commentResult.data?.comments || []).map(
         normalizeComment,
       );
-      nextPost.comment_count = nextComments.length;
+      const totalCount = Number(commentResult.data?.total_count);
+      nextPost.comment_count = Number.isFinite(totalCount) ? totalCount : nextComments.length;
       updatePost(nextPost);
       setComments(nextComments);
+
+      commentsLoadedPages.current = 1;
+      const totalPages = Number(commentResult.data?.total_pages) || 1;
+      commentsHasNextPage.current = totalPages > 1;
+      setCommentsHasNext(commentsHasNextPage.current);
     } catch (error) {
       setActive(null);
       showToast(describeError(error, "상세 내용을 불러오지 못했습니다."));
+    }
+  };
+
+  const loadMoreComments = async () => {
+    if (!active || commentsLoadingMore || !commentsHasNextPage.current) return;
+
+    const requestedPage = commentsLoadedPages.current + 1;
+    setCommentsLoadingMore(true);
+
+    try {
+      const result = await apiRequest(`/posts/${active.post_id}/comments?page=${requestedPage}`);
+      const next = (result.data?.comments || []).map(normalizeComment);
+      setComments((current) => [...current, ...next]);
+
+      commentsLoadedPages.current = requestedPage;
+      const totalPages = Number(result.data?.total_pages) || requestedPage;
+      commentsHasNextPage.current = requestedPage < totalPages;
+      setCommentsHasNext(commentsHasNextPage.current);
+    } catch (error) {
+      showToast(describeError(error, "댓글을 더 불러오지 못했습니다."));
+    } finally {
+      setCommentsLoadingMore(false);
     }
   };
 
@@ -177,10 +226,19 @@ export default function PostsPage() {
         method: "POST",
         body: JSON.stringify({ comment_content: comment.trim() }),
       });
-      const result = await apiRequest(`/posts/${active.post_id}/comments`);
-      const next = (result.data?.comments || []).map(normalizeComment);
-      setComments(next);
-      updatePost({ ...active, comment_count: next.length });
+
+      const pagesToReload = Math.max(commentsLoadedPages.current, 1);
+      const { items, lastData } = await fetchCommentsPages(active.post_id, pagesToReload);
+      setComments(items);
+
+      const totalCount = Number(lastData?.total_count);
+      updatePost({ ...active, comment_count: Number.isFinite(totalCount) ? totalCount : items.length });
+
+      const totalPages = Number(lastData?.total_pages) || pagesToReload;
+      commentsLoadedPages.current = pagesToReload;
+      commentsHasNextPage.current = pagesToReload < totalPages;
+      setCommentsHasNext(commentsHasNextPage.current);
+
       setComment("");
       showToast("댓글이 등록되었습니다.");
     } catch (error) {
@@ -229,9 +287,19 @@ export default function PostsPage() {
       await apiRequest(`/posts/${active.post_id}/comments/${commentId}`, {
         method: "DELETE",
       });
-      const next = comments.filter((item) => item.comment_id !== commentId);
-      setComments(next);
-      updatePost({ ...active, comment_count: next.length });
+
+      const pagesToReload = Math.max(commentsLoadedPages.current, 1);
+      const { items, lastData } = await fetchCommentsPages(active.post_id, pagesToReload);
+      setComments(items);
+
+      const totalCount = Number(lastData?.total_count);
+      updatePost({ ...active, comment_count: Number.isFinite(totalCount) ? totalCount : items.length });
+
+      const totalPages = Number(lastData?.total_pages) || 0;
+      commentsLoadedPages.current = Math.min(pagesToReload, totalPages || pagesToReload);
+      commentsHasNextPage.current = commentsLoadedPages.current < totalPages;
+      setCommentsHasNext(commentsHasNextPage.current);
+
       showToast("댓글이 삭제되었습니다.");
     } catch (error) {
       showToast(describeError(error, "댓글 삭제에 실패했습니다."));
@@ -338,6 +406,9 @@ export default function PostsPage() {
           dialogRef={detailDialog}
           post={active}
           comments={comments}
+          commentsHasNext={commentsHasNext}
+          commentsLoadingMore={commentsLoadingMore}
+          onLoadMoreComments={() => void loadMoreComments()}
           comment={comment}
           editingId={editingId}
           editingContent={editingContent}
