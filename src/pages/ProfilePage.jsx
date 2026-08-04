@@ -5,6 +5,7 @@ import WithdrawModal from "../components/profile/WithdrawModal";
 import { useAuth } from "../context/AuthContext";
 import { ApiError, apiRequest } from "../lib/api";
 import { clearTokens } from "../lib/auth";
+import { resolveImageUrl } from "../lib/constants";
 import { describeError } from "../lib/errorMessages";
 import "../styles/profile.css";
 
@@ -16,6 +17,7 @@ export default function ProfilePage() {
   const [originalNickname, setOriginalNickname] = useState(user?.user_nickname || "");
   const [image, setImage] = useState(user?.user_image || "");
   const [originalImage, setOriginalImage] = useState(user?.user_image || "");
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [withdrawOpen, setWithdrawOpen] = useState(false);
 
@@ -27,11 +29,28 @@ export default function ProfilePage() {
   };
   const changed = nickname !== originalNickname || image !== originalImage;
 
-  const pickImage = (event) => {
+  const pickImage = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return setImage(originalImage);
     if (!file.type.startsWith("image/")) { event.target.value = ""; return window.alert("이미지 파일만 선택할 수 있습니다."); }
-    const reader = new FileReader(); reader.onload = () => setImage(String(reader.result)); reader.readAsDataURL(file);
+
+    // 업로드가 끝나기 전에도 바로 보이도록 로컬 미리보기부터 표시한다.
+    const reader = new FileReader();
+    reader.onload = () => setImage(String(reader.result));
+    reader.readAsDataURL(file);
+
+    try {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append("image", file);
+      const result = await apiRequest("/images", { method: "POST", body: formData });
+      setImage(result.data.image_path);
+    } catch {
+      window.alert("이미지 업로드에 실패했습니다.");
+      setImage(originalImage);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const submit = async (event) => {
@@ -92,7 +111,7 @@ export default function ProfilePage() {
               style={
                 image
                   ? {
-                      backgroundImage: `url(${image})`,
+                      backgroundImage: `url(${resolveImageUrl(image)})`,
                     }
                   : undefined
               }
@@ -144,7 +163,8 @@ export default function ProfilePage() {
           type="submit"
           disabled={
             !changed ||
-            Boolean(nicknameError())
+            Boolean(nicknameError()) ||
+            uploading
           }
         >
           변경사항 저장

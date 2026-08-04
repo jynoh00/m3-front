@@ -1,4 +1,4 @@
-import { FALLBACK_IMAGE } from "./constants";
+import { FALLBACK_IMAGE, resolveImageUrl } from "./constants";
 import { normalizePostContent } from "./format";
 
 const asBoolean = (value) => value === true || value === 1 || value === "true";
@@ -21,6 +21,7 @@ export const normalizePost = (post) => {
     music_title: music?.music_title || post.music_title || "추천 음악 미등록",
     cover_image: music?.cover_image || post.cover_image || FALLBACK_IMAGE,
     artist_name: artistNames || "아티스트 정보 없음",
+    user_image: resolveImageUrl(post.user_image),
     like_count: Number(post.like_count) || 0,
     is_liked: asBoolean(post.is_liked),
     comment_count: Number(post.comment_count) || 0,
@@ -35,7 +36,7 @@ export const normalizeComment = (comment) => ({
   comment_content: comment.comment_content,
   user_id: comment.user_id,
   user_nickname: comment.user_nickname || "음악친구",
-  user_image: comment.user_image || FALLBACK_IMAGE,
+  user_image: resolveImageUrl(comment.user_image),
   created_at: comment.created_at,
   updated_at: comment.updated_at,
 });

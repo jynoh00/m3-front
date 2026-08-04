@@ -2,11 +2,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { apiRequest } from "../lib/api";
 import { clearTokens, getRefreshToken } from "../lib/auth";
+import { resolveImageUrl } from "../lib/constants";
 
 export default function UserHeader({ back = false }) {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const image = user?.user_image || "";
+  const image = user?.user_image ? resolveImageUrl(user.user_image) : "";
 
   const logout = async () => {
     try {

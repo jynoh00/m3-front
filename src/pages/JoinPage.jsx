@@ -1,26 +1,43 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ApiError, apiRequest } from "../lib/api";
-import { FALLBACK_IMAGE } from "../lib/constants";
 import "../styles/join.css";
 
 export default function JoinPage() {
   const navigate = useNavigate();
   const [values, setValues] = useState({ email: "", password: "", confirm: "", nickname: "" });
   const [preview, setPreview] = useState("");
+  const [imagePath, setImagePath] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [errors, setErrors] = useState({});
 
-  const pickImage = (event) => {
+  const pickImage = async (event) => {
     const file = event.target.files?.[0];
-    if (!file) return setPreview("");
+    if (!file) { setPreview(""); return setImagePath(""); }
     if (!file.type.startsWith("image/")) {
       event.target.value = "";
       return setErrors({ image: "* 이미지 파일만 업로드할 수 있습니다." });
     }
+
+    // 업로드가 끝나기 전에도 바로 보이도록 로컬 미리보기부터 표시한다.
     const reader = new FileReader();
     reader.onload = () => setPreview(String(reader.result));
     reader.readAsDataURL(file);
     setErrors({});
+
+    try {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append("image", file);
+      const result = await apiRequest("/images", { method: "POST", auth: false, body: formData });
+      setImagePath(result.data.image_path);
+    } catch {
+      setErrors({ image: "* 이미지 업로드에 실패했습니다." });
+      setPreview("");
+      setImagePath("");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const submit = async (event) => {
@@ -35,9 +52,10 @@ export default function JoinPage() {
     if (!values.nickname.trim()) next.nickname = "* 닉네임을 입력해주세요.";
     else if (values.nickname.length < 2 || values.nickname.length > 10) next.nickname = "* 닉네임은 2자 이상 10자 이하로 입력해주세요.";
     else if (!/^\S+$/.test(values.nickname)) next.nickname = "* 닉네임에는 공백을 사용할 수 없습니다.";
+    if (uploading) next.image = "* 이미지 업로드가 끝날 때까지 기다려주세요.";
     if (Object.keys(next).length) return setErrors(next);
     try {
-      await apiRequest("/join", { method: "POST", auth: false, body: JSON.stringify({ user_email: values.email, user_password: values.password, user_password_check: values.confirm, user_nickname: values.nickname, user_image: preview || FALLBACK_IMAGE }) });
+      await apiRequest("/join", { method: "POST", auth: false, body: JSON.stringify({ user_email: values.email, user_password: values.password, user_password_check: values.confirm, user_nickname: values.nickname, user_image: imagePath || undefined }) });
       navigate("/login", { replace: true });
     } catch (requestError) {
       if (requestError instanceof ApiError && requestError.status === 409) {
@@ -174,7 +192,7 @@ export default function JoinPage() {
           <p className="helper-text">{errors.nickname}</p>
         </div>
 
-        <button className="signup-button" type="submit">
+        <button className="signup-button" type="submit" disabled={uploading}>
           회원가입
         </button>
       </form>
