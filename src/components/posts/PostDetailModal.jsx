@@ -8,9 +8,10 @@ export default function PostDetailModal({
   comment,
   editingId,
   editingContent,
-  checkingCommentId,
   liking,
   toast,
+  isOwner,
+  currentUserId,
   onClose,
   onEditPost,
   onDeletePost,
@@ -22,6 +23,7 @@ export default function PostDetailModal({
   onCancelCommentEdit,
   onStartCommentEdit,
   onDeleteComment,
+  onOpenReport,
 }) {
   return (
     <dialog
@@ -58,8 +60,14 @@ export default function PostDetailModal({
               </div>
 
               <div className="detail-post-actions">
-                <button className="detail-outline-button" type="button" onClick={onEditPost}>수정</button>
-                <button className="detail-outline-button is-delete" type="button" onClick={onDeletePost}>삭제</button>
+                {isOwner ? (
+                  <>
+                    <button className="detail-outline-button" type="button" onClick={onEditPost}>수정</button>
+                    <button className="detail-outline-button is-delete" type="button" onClick={onDeletePost}>삭제</button>
+                  </>
+                ) : (
+                  <button className="detail-outline-button is-delete" type="button" onClick={onOpenReport}>신고</button>
+                )}
               </div>
             </div>
           </header>
@@ -68,11 +76,11 @@ export default function PostDetailModal({
 
           <section className="detail-moment">
             <figure className="detail-music-cover">
-              <img src={post.music_cover_image} alt="추천 음악 커버 이미지" />
+              <img src={post.cover_image} alt="추천 음악 커버 이미지" />
             </figure>
             <div className="detail-moment-copy">
               <span className="detail-track-label">NOW PLAYING</span>
-              <strong>{post.music_title}</strong>
+              <strong>{post.music_title} · {post.artist_name}</strong>
               <p className="detail-post-body">{post.post_content}</p>
             </div>
           </section>
@@ -114,10 +122,9 @@ export default function PostDetailModal({
                 <CommentItem
                   key={item.comment_id}
                   item={item}
+                  isOwner={currentUserId != null && String(item.user_id) === currentUserId}
                   editing={editingId === item.comment_id}
                   editingContent={editingContent}
-                  checking={checkingCommentId === item.comment_id}
-                  checkingAnyComment={checkingCommentId !== null}
                   onEditingContentChange={onEditingContentChange}
                   onSave={() => onSaveComment(item.comment_id)}
                   onCancel={onCancelCommentEdit}

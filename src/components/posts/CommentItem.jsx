@@ -3,10 +3,9 @@ import { formatDateTime } from "../../lib/format";
 
 export default function CommentItem({
   item,
+  isOwner,
   editing,
   editingContent,
-  checking,
-  checkingAnyComment,
   onEditingContentChange,
   onSave,
   onCancel,
@@ -41,37 +40,33 @@ export default function CommentItem({
         )}
       </div>
 
-      <div className="detail-comment-actions">
-        {editing ? (
-          <>
-            <button className="card-comment-action" type="button" onClick={onSave}>
-              저장
-            </button>
-            <button className="card-comment-action" type="button" onClick={onCancel}>
-              취소
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              className="card-comment-action"
-              type="button"
-              disabled={checkingAnyComment}
-              onClick={onStartEdit}
-            >
-              {checking ? "확인 중" : "수정"}
-            </button>
-            <button
-              className="card-comment-action is-delete"
-              type="button"
-              onClick={onDelete}
-            >
-              삭제
-            </button>
-          </>
-        )}
-      </div>
+      {isOwner && (
+        <div className="detail-comment-actions">
+          {editing ? (
+            <>
+              <button className="card-comment-action" type="button" onClick={onSave}>
+                저장
+              </button>
+              <button className="card-comment-action" type="button" onClick={onCancel}>
+                취소
+              </button>
+            </>
+          ) : (
+            <>
+              <button className="card-comment-action" type="button" onClick={onStartEdit}>
+                수정
+              </button>
+              <button
+                className="card-comment-action is-delete"
+                type="button"
+                onClick={onDelete}
+              >
+                삭제
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </article>
   );
 }
-

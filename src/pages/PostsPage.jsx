@@ -3,15 +3,16 @@ import { Link, useNavigate } from "react-router-dom";
 import UserHeader from "../components/UserHeader";
 import MomentCard from "../components/posts/MomentCard";
 import PostDetailModal from "../components/posts/PostDetailModal";
-import { apiRequest } from "../lib/api";
-import {
-  likedStateFrom,
-  normalizeComment,
-  normalizePost,
-} from "../lib/posts";
+import { useAuth } from "../context/AuthContext";
+import { apiRequest, ApiError } from "../lib/api";
+import { describeError } from "../lib/errorMessages";
+import { normalizeComment, normalizePost } from "../lib/posts";
 import "../styles/posts.css";
 
 export default function PostsPage() {
+  const { user } = useAuth();
+  const currentUserId = user?.user_id != null ? String(user.user_id) : null;
+
   const [posts, setPosts] = useState([]);
   const [hasNext, setHasNext] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -21,11 +22,14 @@ export default function PostsPage() {
   const [comment, setComment] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editingContent, setEditingContent] = useState("");
-  const [checkingCommentId, setCheckingCommentId] = useState(null);
   const [liking, setLiking] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportSubmitting, setReportSubmitting] = useState(false);
   const [toast, setToast] = useState("");
   const sentinel = useRef(null);
   const detailDialog = useRef(null);
+  const reportDialog = useRef(null);
   const nextPage = useRef(1);
   const requestInFlight = useRef(false);
   const hasNextPage = useRef(true);
@@ -74,11 +78,7 @@ export default function PostsPage() {
       hasNextPage.current = canLoadMore;
       setHasNext(canLoadMore);
     } catch (error) {
-      setLoadError(
-        error instanceof Error
-          ? error.message
-          : "게시글 목록을 불러오지 못했습니다.",
-      );
+      setLoadError(describeError(error, "게시글 목록을 불러오지 못했습니다."));
       hasNextPage.current = false;
       setHasNext(false);
     } finally {
@@ -110,29 +110,26 @@ export default function PostsPage() {
     if (active && dialog && !dialog.open) dialog.showModal();
   }, [active]);
 
+  useEffect(() => {
+    const dialog = reportDialog.current;
+    if (!dialog) return;
+    if (reportOpen && !dialog.open) dialog.showModal();
+    if (!reportOpen && dialog.open) dialog.close();
+  }, [reportOpen]);
+
   const openDetail = async (post) => {
     setActive(post);
     setComments([]);
     setEditingId(null);
+    setReportOpen(false);
+    setReportReason("");
 
     try {
       const [detail, commentResult] = await Promise.all([
         apiRequest(`/posts/${post.post_id}`),
         apiRequest(`/posts/${post.post_id}/comments`),
       ]);
-      const hasDetailLikedState = [
-        "is_liked",
-        "liked",
-        "increase_like_count",
-        "is_like",
-      ].some((key) => detail.data?.[key] !== undefined);
-      const nextPost = normalizePost({
-        ...post,
-        ...detail.data,
-        is_liked: hasDetailLikedState
-          ? likedStateFrom(detail.data || {})
-          : post.is_liked,
-      });
+      const nextPost = normalizePost({ ...post, ...detail.data });
       const nextComments = (commentResult.data?.comments || []).map(
         normalizeComment,
       );
@@ -141,9 +138,7 @@ export default function PostsPage() {
       setComments(nextComments);
     } catch (error) {
       setActive(null);
-      showToast(
-        error instanceof Error ? error.message : "상세 내용을 불러오지 못했습니다.",
-      );
+      showToast(describeError(error, "상세 내용을 불러오지 못했습니다."));
     }
   };
 
@@ -167,7 +162,7 @@ export default function PostsPage() {
           : active.is_liked,
       });
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "좋아요 처리에 실패했습니다.");
+      showToast(describeError(error, "좋아요 처리에 실패했습니다."));
     } finally {
       setLiking(false);
     }
@@ -189,7 +184,7 @@ export default function PostsPage() {
       setComment("");
       showToast("댓글이 등록되었습니다.");
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "댓글 등록에 실패했습니다.");
+      showToast(describeError(error, "댓글 등록에 실패했습니다."));
     }
   };
 
@@ -213,37 +208,18 @@ export default function PostsPage() {
       setEditingId(null);
       showToast("댓글이 수정되었습니다.");
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "댓글 수정에 실패했습니다.");
+      showToast(describeError(error, "댓글 수정에 실패했습니다."));
     }
   };
 
-  const startCommentEdit = async (item) => {
-    if (!active || checkingCommentId !== null) return;
-    setCheckingCommentId(item.comment_id);
-
-    try {
-      const result = await apiRequest("/me/profile");
-      const currentUserId = result.data?.user_id;
-      const isOwner = currentUserId != null &&
-        item.user_id != null &&
-        String(currentUserId) === String(item.user_id);
-
-      if (!isOwner) {
-        showToast("댓글을 수정할 권한이 없습니다.");
-        return;
-      }
-
-      setEditingId(item.comment_id);
-      setEditingContent(item.comment_content);
-    } catch (error) {
-      showToast(
-        error instanceof Error
-          ? error.message
-          : "댓글 수정 권한을 확인하지 못했습니다.",
-      );
-    } finally {
-      setCheckingCommentId(null);
+  const startCommentEdit = (item) => {
+    if (!active) return;
+    if (currentUserId == null || String(item.user_id) !== currentUserId) {
+      showToast("댓글을 수정할 권한이 없습니다.");
+      return;
     }
+    setEditingId(item.comment_id);
+    setEditingContent(item.comment_content);
   };
 
   const deleteComment = async (commentId) => {
@@ -258,21 +234,13 @@ export default function PostsPage() {
       updatePost({ ...active, comment_count: next.length });
       showToast("댓글이 삭제되었습니다.");
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "댓글 삭제에 실패했습니다.");
+      showToast(describeError(error, "댓글 삭제에 실패했습니다."));
     }
   };
 
-  const editPost = async () => {
+  const editPost = () => {
     if (!active) return;
-
-    try {
-      await apiRequest(`/posts/${active.post_id}/edit`);
-      navigate(`/posts/${encodeURIComponent(active.post_id)}/edit`);
-    } catch (error) {
-      showToast(
-        error instanceof Error ? error.message : "수정 정보를 불러오지 못했습니다.",
-      );
-    }
+    navigate(`/posts/${encodeURIComponent(active.post_id)}/edit`);
   };
 
   const deletePost = async () => {
@@ -284,7 +252,40 @@ export default function PostsPage() {
       setActive(null);
       showToast("게시글이 삭제되었습니다.");
     } catch (error) {
-      showToast(error instanceof Error ? error.message : "게시글 삭제에 실패했습니다.");
+      showToast(describeError(error, "게시글 삭제에 실패했습니다."));
+    }
+  };
+
+  const openReport = () => {
+    if (!active) return;
+    setReportReason("");
+    setReportOpen(true);
+  };
+
+  const closeReport = () => setReportOpen(false);
+
+  const submitReport = async (event) => {
+    event.preventDefault();
+    if (!active || !reportReason.trim() || reportSubmitting) return;
+
+    setReportSubmitting(true);
+    try {
+      await apiRequest(`/posts/${active.post_id}/report`, {
+        method: "POST",
+        body: JSON.stringify({ reason: reportReason.trim() }),
+      });
+      setReportOpen(false);
+      setReportReason("");
+      showToast("신고가 접수되었습니다.");
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 409) {
+        showToast("이미 신고한 게시글입니다.");
+        setReportOpen(false);
+      } else {
+        showToast(describeError(error, "신고 접수에 실패했습니다."));
+      }
+    } finally {
+      setReportSubmitting(false);
     }
   };
 
@@ -340,11 +341,12 @@ export default function PostsPage() {
           comment={comment}
           editingId={editingId}
           editingContent={editingContent}
-          checkingCommentId={checkingCommentId}
           liking={liking}
           toast={toast}
+          isOwner={currentUserId != null && String(active.user_id) === currentUserId}
+          currentUserId={currentUserId}
           onClose={() => setActive(null)}
-          onEditPost={() => void editPost()}
+          onEditPost={editPost}
           onDeletePost={() => void deletePost()}
           onLike={() => void like()}
           onCommentChange={setComment}
@@ -352,9 +354,50 @@ export default function PostsPage() {
           onEditingContentChange={setEditingContent}
           onSaveComment={(commentId) => void saveComment(commentId)}
           onCancelCommentEdit={() => setEditingId(null)}
-          onStartCommentEdit={(item) => void startCommentEdit(item)}
+          onStartCommentEdit={startCommentEdit}
           onDeleteComment={(commentId) => void deleteComment(commentId)}
+          onOpenReport={openReport}
         />
+      )}
+
+      {active && (
+        <dialog
+          ref={reportDialog}
+          className="confirm-modal report-modal"
+          onCancel={(event) => {
+            event.preventDefault();
+            closeReport();
+          }}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) closeReport();
+          }}
+        >
+          <form onSubmit={submitReport}>
+            <span className="confirm-modal-icon">!</span>
+            <h2>게시글을 신고할까요?</h2>
+            <p>신고 사유를 입력해주세요. 접수된 신고는 운영자 검토 후 처리됩니다.</p>
+            <textarea
+              className="report-reason-textarea"
+              value={reportReason}
+              onChange={(event) => setReportReason(event.target.value)}
+              maxLength={200}
+              placeholder="예) 부적절한 내용이 포함되어 있습니다."
+              required
+            />
+            <div className="confirm-modal-actions">
+              <button className="confirm-cancel-button" type="button" onClick={closeReport}>
+                취소
+              </button>
+              <button
+                className="confirm-delete-button"
+                type="submit"
+                disabled={reportSubmitting || !reportReason.trim()}
+              >
+                {reportSubmitting ? "접수 중" : "신고하기"}
+              </button>
+            </div>
+          </form>
+        </dialog>
       )}
 
       {!active && (

@@ -1332,6 +1332,29 @@ body[data-page="posts"]::after {
   color: #ffffff;
 }
 
+.confirm-delete-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.report-reason-textarea {
+  display: block;
+  width: 100%;
+  min-height: 90px;
+  margin-bottom: 20px;
+  padding: 10px 12px;
+  border: 1px solid rgba(116, 40, 244, 0.22);
+  border-radius: 10px;
+  outline: 0;
+  resize: vertical;
+  background: #ffffff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+}
+
 .post-toast {
   position: fixed;
   z-index: 130;
