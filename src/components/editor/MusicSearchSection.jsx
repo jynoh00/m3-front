@@ -65,7 +65,7 @@ export default function MusicSearchSection({
             />
             <span className="music-result-copy">
               <strong>{track.title}</strong>
-              <span>{track.artist} · {track.album}</span>
+              <span>{track.artist}</span>
             </span>
             <span className="music-result-select">선택</span>
           </button>
@@ -78,7 +78,7 @@ export default function MusicSearchSection({
           <div>
             <span>선택한 음악</span>
             <strong>{selectedTrack.title}</strong>
-            <p>{selectedTrack.artist} · {selectedTrack.album}</p>
+            <p>{selectedTrack.artist}</p>
           </div>
           <button type="button" aria-label="선택한 음악 해제" onClick={onClearTrack}>×</button>
         </div>

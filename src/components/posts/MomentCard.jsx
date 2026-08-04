@@ -21,7 +21,7 @@ export default function MomentCard({ post, onOpen }) {
         <figure className="music-cover">
           <img
             className="music-cover-image"
-            src={post.music_cover_image}
+            src={post.cover_image}
             alt={`${post.music_title} 커버 이미지`}
             onError={(event) => {
               event.currentTarget.src = FALLBACK_IMAGE;

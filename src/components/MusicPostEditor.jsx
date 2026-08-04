@@ -4,99 +4,37 @@ import MomentPreview from "./editor/MomentPreview";
 import MusicSearchSection from "./editor/MusicSearchSection";
 import StorySection from "./editor/StorySection";
 import { apiRequest } from "../lib/api";
+import { describeError } from "../lib/errorMessages";
 import { FALLBACK_IMAGE } from "../lib/constants";
 import { normalizePostContent, POST_CONTENT_MAX_LENGTH } from "../lib/format";
 
-const artistName = (track) => {
-  if (typeof track.artist === "string") return track.artist;
-  if (track.artist_name) return track.artist_name;
-  if (track.artistName) return track.artistName;
-  if (Array.isArray(track.artists)) {
-    return track.artists
-      .map((artist) => artist.name || artist.artist_name)
-      .filter(Boolean)
-      .join(", ");
-  }
-  return track.attributes?.artistName || "아티스트 정보 없음";
+// 백엔드 MusicSearchResultDTO: { music_id, music_title, cover_image, artists: [{artist_id, artist_name}] }
+const normalizeTrack = (track) => {
+  const artists = (track.artists || [])
+    .map((artist) => artist.artist_name)
+    .filter(Boolean);
+
+  return {
+    musicId: track.music_id,
+    title: track.music_title || "제목 정보 없음",
+    artists: artists.length ? artists : ["아티스트 정보 없음"],
+    artist: artists.length ? artists.join(", ") : "아티스트 정보 없음",
+    coverImage: track.cover_image || FALLBACK_IMAGE,
+  };
 };
 
-const artworkUrl = (track) => {
-  const artwork = track.cover_image ||
-    track.music_cover_image ||
-    track.artwork_url ||
-    track.artworkUrl100 ||
-    track.album?.images?.[0]?.url ||
-    track.attributes?.artwork?.url ||
-    FALLBACK_IMAGE;
-  return artwork.replace?.("{w}", "500").replace?.("{h}", "500") || FALLBACK_IMAGE;
-};
+const extractTracks = (result) =>
+  Array.isArray(result?.data?.results) ? result.data.results.map(normalizeTrack) : [];
 
-const normalizeTrack = (track, index = 0) => ({
-  id: String(
-    track.music_id ??
-    track.track_id ??
-    track.trackId ??
-    track.id ??
-    track.attributes?.playParams?.id ??
-    `result-${index}`,
-  ),
-  title:
-    track.music_track_title ||
-    track.track_title ||
-    track.music_title ||
-    track.trackName ||
-    track.name ||
-    track.attributes?.name ||
-    "제목 정보 없음",
-  artist: artistName(track),
-  album:
-    track.album_name ||
-    track.collectionName ||
-    track.album?.name ||
-    track.attributes?.albumName ||
-    "앨범 정보 없음",
-  coverImage: artworkUrl(track),
-  externalUrl:
-    track.external_url ||
-    track.trackViewUrl ||
-    track.external_urls?.spotify ||
-    track.attributes?.url ||
-    "",
-  provider: track.provider || track.source || "music-api",
-});
+// GET /posts/{id}/edit 응답(PostEditFormResponseDTO)의 music 필드도 동일한 MusicSearchResultDTO 모양이다.
+const trackFromPost = (post) => (post.music ? normalizeTrack(post.music) : null);
 
-const extractTracks = (result) => {
-  const data = result?.data ?? result;
-  const candidates = data?.tracks?.items ||
-    data?.results?.songs?.data ||
-    data?.results?.trackmatches?.track ||
-    data?.tracks ||
-    data?.songs ||
-    data?.items ||
-    data?.results ||
-    data?.data ||
-    [];
-  return Array.isArray(candidates) ? candidates.map(normalizeTrack) : [];
-};
-
-const trackFromPost = (post) => {
-  const combined = post.music_title || "";
-  const parts = combined.split(" · ");
-  const title = post.music_track_title || parts[0] || "";
-  if (!title && !post.music_cover_image) return null;
-
-  return normalizeTrack({
-    music_id: post.music_id || post.post_id,
-    music_track_title: title,
-    artist: post.music_artist || parts.slice(1).join(" · ") || "아티스트 정보 없음",
-    album_name: post.music_album,
-    music_cover_image: post.music_cover_image,
-    external_url: post.music_external_url,
-    provider: post.music_provider || "saved-post",
-  });
-};
-
-export default function MusicPostEditor({ mode, initialPost, onSubmit }) {
+export default function MusicPostEditor({
+  mode,
+  initialPost,
+  onSubmit,
+  onSaveDraft,
+}) {
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -106,6 +44,7 @@ export default function MusicPostEditor({ mode, initialPost, onSubmit }) {
   const [searchStatus, setSearchStatus] = useState("두 글자 이상 입력하면 검색합니다.");
   const [searching, setSearching] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
   const abortRef = useRef(null);
@@ -138,11 +77,11 @@ export default function MusicPostEditor({ mode, initialPost, onSubmit }) {
     const controller = new AbortController();
     abortRef.current = controller;
     setSearching(true);
-    setSearchStatus(`“${keyword}” 검색 중입니다.`);
+    setSearchStatus(`"${keyword}" 검색 중입니다.`);
 
     try {
-      const params = new URLSearchParams({ query: keyword, limit: "10" });
-      const result = await apiRequest(`/music/search?${params}`, {
+      const params = new URLSearchParams({ keyword });
+      const result = await apiRequest(`/musics/search?${params}`, {
         signal: controller.signal,
       });
       const tracks = extractTracks(result);
@@ -155,7 +94,7 @@ export default function MusicPostEditor({ mode, initialPost, onSubmit }) {
     } catch (requestError) {
       if (requestError.name !== "AbortError") {
         setResults([]);
-        setSearchStatus(requestError.message || "음악 검색 서버에 연결할 수 없습니다.");
+        setSearchStatus(describeError(requestError, "음악 검색 서버에 연결할 수 없습니다."));
       }
     } finally {
       if (abortRef.current === controller) setSearching(false);
@@ -165,42 +104,64 @@ export default function MusicPostEditor({ mode, initialPost, onSubmit }) {
   const selectTrack = (track) => {
     setSelectedTrack(track);
     setResults([]);
-    setSearchStatus(`“${track.title}”을 선택했습니다.`);
+    setSearchStatus(`"${track.title}"을 선택했습니다.`);
     setError("");
+  };
+
+  const buildPayload = () => ({
+    post_title: title.trim(),
+    post_content: content.trim(),
+    music_title: selectedTrack.title,
+    cover_image: selectedTrack.coverImage,
+    artist_names: selectedTrack.artists,
+  });
+
+  const validate = () => {
+    if (!title.trim()) return "* 제목을 입력해주세요.";
+    if (title.trim().length < 2) return "* 제목은 2글자 이상 입력해주세요.";
+    if (!content.trim()) return "* 내용을 입력해주세요.";
+    if (content.trim().length > POST_CONTENT_MAX_LENGTH) {
+      return `* 내용은 ${POST_CONTENT_MAX_LENGTH}자 이하로 입력해주세요.`;
+    }
+    if (!selectedTrack) return "* 포스트에 표시할 음악을 선택해주세요.";
+    return "";
   };
 
   const submit = async (event) => {
     event.preventDefault();
-    setError("");
-    if (!title.trim()) return setError("* 제목을 입력해주세요.");
-    if (title.trim().length < 2) return setError("* 제목은 2글자 이상 입력해주세요.");
-    if (!content.trim()) return setError("* 내용을 입력해주세요.");
-    if (content.trim().length > POST_CONTENT_MAX_LENGTH) {
-      return setError(`* 내용은 ${POST_CONTENT_MAX_LENGTH}자 이하로 입력해주세요.`);
-    }
-    if (!selectedTrack) return setError("* 포스트에 표시할 음악을 선택해주세요.");
+    const validationError = validate();
+    setError(validationError);
+    if (validationError) return;
 
     setSubmitting(true);
     try {
-      const message = await onSubmit({
-        post_title: title.trim(),
-        post_content: content.trim(),
-        music_id: selectedTrack.id,
-        music_title: `${selectedTrack.title} · ${selectedTrack.artist}`,
-        music_track_title: selectedTrack.title,
-        music_artist: selectedTrack.artist,
-        music_album: selectedTrack.album,
-        music_cover_image: selectedTrack.coverImage,
-        music_external_url: selectedTrack.externalUrl,
-        music_provider: selectedTrack.provider,
-      });
+      const message = await onSubmit(buildPayload());
       setToast(message || "모멘트가 저장되었습니다.");
       window.setTimeout(() => {
         navigate("/posts", { replace: true });
       }, 500);
     } catch (requestError) {
-      setError(`* ${requestError.message || "서버와 연결할 수 없습니다."}`);
+      setError(`* ${describeError(requestError, "서버와 연결할 수 없습니다.")}`);
       setSubmitting(false);
+    }
+  };
+
+  const saveDraft = async () => {
+    if (!onSaveDraft || savingDraft) return;
+    const validationError = validate();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setSavingDraft(true);
+    try {
+      await onSaveDraft(buildPayload());
+      setToast("임시저장되었습니다.");
+    } catch (requestError) {
+      setError(`* ${describeError(requestError, "임시저장에 실패했습니다.")}`);
+    } finally {
+      setSavingDraft(false);
     }
   };
 
@@ -243,6 +204,16 @@ export default function MusicPostEditor({ mode, initialPost, onSubmit }) {
             <p className="helper-text" role="alert">{error}</p>
             <div className="form-actions">
               <Link className="cancel-button" to="/posts">취소</Link>
+              {onSaveDraft && (
+                <button
+                  className="cancel-button"
+                  type="button"
+                  disabled={savingDraft || submitting}
+                  onClick={() => void saveDraft()}
+                >
+                  {savingDraft ? "임시저장 중" : "임시저장"}
+                </button>
+              )}
               <button
                 className={`submit-button${submitting ? " is-loading" : ""}`}
                 type="submit"
