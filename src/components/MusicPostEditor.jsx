@@ -111,9 +111,9 @@ export default function MusicPostEditor({
   const buildPayload = () => ({
     post_title: title.trim(),
     post_content: content.trim(),
-    music_title: selectedTrack.title,
-    cover_image: selectedTrack.coverImage,
-    artist_names: selectedTrack.artists,
+    music_title: selectedTrack?.title ?? "",
+    cover_image: selectedTrack?.coverImage ?? "",
+    artist_names: selectedTrack?.artists ?? [],
   });
 
   const validate = () => {
@@ -124,6 +124,18 @@ export default function MusicPostEditor({
       return `* 내용은 ${POST_CONTENT_MAX_LENGTH}자 이하로 입력해주세요.`;
     }
     if (!selectedTrack) return "* 포스트에 표시할 음악을 선택해주세요.";
+    return "";
+  };
+
+  // 백엔드는 POST /posts/temp, POST /posts/{id}/temp에 @Valid를 적용하지 않고,
+  // TempPost.artistMusic도 nullable이라 임시저장은 음악 선택 없이도 가능하다.
+  const validateDraft = () => {
+    if (!title.trim()) return "* 제목을 입력해주세요.";
+    if (title.trim().length < 2) return "* 제목은 2글자 이상 입력해주세요.";
+    if (!content.trim()) return "* 내용을 입력해주세요.";
+    if (content.trim().length > POST_CONTENT_MAX_LENGTH) {
+      return `* 내용은 ${POST_CONTENT_MAX_LENGTH}자 이하로 입력해주세요.`;
+    }
     return "";
   };
 
@@ -148,7 +160,7 @@ export default function MusicPostEditor({
 
   const saveDraft = async () => {
     if (!onSaveDraft || savingDraft) return;
-    const validationError = validate();
+    const validationError = validateDraft();
     if (validationError) {
       setError(validationError);
       return;
