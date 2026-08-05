@@ -52,7 +52,7 @@ jobs:
           context: .
           push: true
           build-args: |
-            VITE_API_BASE_URL=
+            VITE_API_BASE_URL=/api
           tags: |
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
