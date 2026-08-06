@@ -1,43 +1,20 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ApiError, apiRequest } from "../lib/api";
+import { useImageUpload } from "../hooks/useImageUpload";
 import "../styles/join.css";
 
 export default function JoinPage() {
   const navigate = useNavigate();
   const [values, setValues] = useState({ email: "", password: "", confirm: "", nickname: "" });
-  const [preview, setPreview] = useState("");
-  const [imagePath, setImagePath] = useState("");
   const [uploading, setUploading] = useState(false);
   const [errors, setErrors] = useState({});
+  const { preview, pickImage: pickImageFile, upload: uploadImage } = useImageUpload();
 
-  const pickImage = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) { setPreview(""); return setImagePath(""); }
-    if (!file.type.startsWith("image/")) {
-      event.target.value = "";
-      return setErrors({ image: "* 이미지 파일만 업로드할 수 있습니다." });
-    }
-
-    // 업로드가 끝나기 전에도 바로 보이도록 로컬 미리보기부터 표시한다.
-    const reader = new FileReader();
-    reader.onload = () => setPreview(String(reader.result));
-    reader.readAsDataURL(file);
+  const pickImage = (event) => {
+    const { ok } = pickImageFile(event);
+    if (!ok) return setErrors({ image: "* 이미지 파일만 업로드할 수 있습니다." });
     setErrors({});
-
-    try {
-      setUploading(true);
-      const formData = new FormData();
-      formData.append("image", file);
-      const result = await apiRequest("/images", { method: "POST", auth: false, body: formData });
-      setImagePath(result.data.image_path);
-    } catch {
-      setErrors({ image: "* 이미지 업로드에 실패했습니다." });
-      setPreview("");
-      setImagePath("");
-    } finally {
-      setUploading(false);
-    }
   };
 
   const submit = async (event) => {
@@ -52,9 +29,17 @@ export default function JoinPage() {
     if (!values.nickname.trim()) next.nickname = "* 닉네임을 입력해주세요.";
     else if (values.nickname.length < 2 || values.nickname.length > 10) next.nickname = "* 닉네임은 2자 이상 10자 이하로 입력해주세요.";
     else if (!/^\S+$/.test(values.nickname)) next.nickname = "* 닉네임에는 공백을 사용할 수 없습니다.";
-    if (uploading) next.image = "* 이미지 업로드가 끝날 때까지 기다려주세요.";
     if (Object.keys(next).length) return setErrors(next);
+
+    setUploading(true);
     try {
+      // 회원가입이 실제로 확정된 지금 시점에만 이미지를 서버에 업로드한다.
+      let imagePath;
+      try {
+        imagePath = await uploadImage({ auth: false });
+      } catch {
+        return setErrors({ image: "* 이미지 업로드에 실패했습니다." });
+      }
       await apiRequest("/join", { method: "POST", auth: false, body: JSON.stringify({ user_email: values.email, user_password: values.password, user_password_check: values.confirm, user_nickname: values.nickname, user_image: imagePath || undefined }) });
       navigate("/login", { replace: true });
     } catch (requestError) {
@@ -63,6 +48,8 @@ export default function JoinPage() {
         if (requestError.message === "duplicated_user_nickname") return setErrors({ nickname: "* 이미 사용 중인 닉네임입니다." });
       }
       setErrors({ email: "* 서버에 연결할 수 없습니다." });
+    } finally {
+      setUploading(false);
     }
   };
 

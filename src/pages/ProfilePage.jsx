@@ -7,6 +7,7 @@ import { ApiError, apiRequest } from "../lib/api";
 import { clearTokens } from "../lib/auth";
 import { resolveImageUrl } from "../lib/constants";
 import { describeError } from "../lib/errorMessages";
+import { useImageUpload } from "../hooks/useImageUpload";
 import "../styles/profile.css";
 
 export default function ProfilePage() {
@@ -16,10 +17,10 @@ export default function ProfilePage() {
   const [nickname, setNickname] = useState(user?.user_nickname || "");
   const [originalNickname, setOriginalNickname] = useState(user?.user_nickname || "");
   const [image, setImage] = useState(user?.user_image || "");
-  const [originalImage, setOriginalImage] = useState(user?.user_image || "");
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const { preview, file: pendingImageFile, pickImage: pickImageFile, upload: uploadImage, clearImage } = useImageUpload();
 
   const nicknameError = () => {
     if (!nickname.trim()) return "* 닉네임을 입력해주세요.";
@@ -27,48 +28,43 @@ export default function ProfilePage() {
     if (!/^\S+$/.test(nickname)) return "* 닉네임에는 공백을 사용할 수 없습니다.";
     return "";
   };
-  const changed = nickname !== originalNickname || image !== originalImage;
+  const changed = nickname !== originalNickname || Boolean(pendingImageFile);
+  const displayImage = preview || (image ? resolveImageUrl(image) : "");
 
-  const pickImage = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return setImage(originalImage);
-    if (!file.type.startsWith("image/")) { event.target.value = ""; return window.alert("이미지 파일만 선택할 수 있습니다."); }
-
-    // 업로드가 끝나기 전에도 바로 보이도록 로컬 미리보기부터 표시한다.
-    const reader = new FileReader();
-    reader.onload = () => setImage(String(reader.result));
-    reader.readAsDataURL(file);
-
-    try {
-      setUploading(true);
-      const formData = new FormData();
-      formData.append("image", file);
-      const result = await apiRequest("/images", { method: "POST", body: formData });
-      setImage(result.data.image_path);
-    } catch {
-      window.alert("이미지 업로드에 실패했습니다.");
-      setImage(originalImage);
-    } finally {
-      setUploading(false);
-    }
+  const pickImage = (event) => {
+    const { ok } = pickImageFile(event);
+    if (!ok) { event.target.value = ""; window.alert("이미지 파일만 선택할 수 있습니다."); }
   };
 
   const submit = async (event) => {
     event.preventDefault();
     const validation = nicknameError(); if (validation) return setError(validation);
+
+    setUploading(true);
     try {
-      await apiRequest("/me/profile", { method: "PATCH", body: JSON.stringify({ user_new_nickname: nickname, user_new_image: image }) });
+      // 변경사항 저장이 실제로 확정된 지금 시점에만 새 이미지를 서버에 업로드한다.
+      let imagePath = image;
+      try {
+        const uploaded = await uploadImage();
+        if (uploaded) imagePath = uploaded;
+      } catch {
+        return setError("* 이미지 업로드에 실패했습니다.");
+      }
+      await apiRequest("/me/profile", { method: "PATCH", body: JSON.stringify({ user_new_nickname: nickname, user_new_image: imagePath }) });
+      setImage(imagePath);
+      clearImage();
       setOriginalNickname(nickname);
-      setOriginalImage(image);
       setUser((current) => ({
         ...current,
         user_nickname: nickname,
-        user_image: image,
+        user_image: imagePath,
       }));
       setError("");
     } catch (requestError) {
       if (requestError instanceof ApiError && requestError.status === 409) return setError("* 이미 사용 중인 닉네임입니다.");
       setError(`* ${describeError(requestError, "서버에 연결할 수 없습니다.")}`);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -109,9 +105,9 @@ export default function ProfilePage() {
             <span
               className="photo-image"
               style={
-                image
+                displayImage
                   ? {
-                      backgroundImage: `url(${resolveImageUrl(image)})`,
+                      backgroundImage: `url(${displayImage})`,
                     }
                   : undefined
               }
