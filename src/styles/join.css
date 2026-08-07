@@ -17,10 +17,13 @@
 body[data-page="join"] {
   min-height: 100vh;
   background:
-    linear-gradient(rgba(255, 255, 255, 0.76), rgba(255, 255, 255, 0.9)),
-    url("https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=1600&q=80") center / cover fixed;
+    radial-gradient(900px 620px at 8% -8%, rgba(235, 74, 160, 0.16), transparent 60%),
+    radial-gradient(760px 680px at 96% 4%, rgba(116, 40, 244, 0.14), transparent 55%),
+    radial-gradient(820px 760px at 50% 118%, rgba(99, 221, 207, 0.18), transparent 60%),
+    linear-gradient(180deg, #faf8fc 0%, #f5f2fa 55%, #f2f7f6 100%);
+  background-attachment: fixed;
   color: var(--ink);
-  font-family: Arial, "Helvetica Neue", sans-serif;
+  font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
 }
 
 body[data-page="join"]::before,
@@ -118,13 +121,13 @@ body[data-page="join"]::after {
   min-height: 100vh;
   align-items: center;
   justify-content: center;
-  padding: 86px 24px 36px;
+  padding: 72px 24px 28px;
 }
 
 .signup-card {
   width: 100%;
   max-width: 620px;
-  padding: 34px 38px 30px;
+  padding: 26px 34px 24px;
   border: 1px solid rgba(17, 17, 17, 0.08);
   border-radius: 24px;
   background: var(--glass);
@@ -134,12 +137,12 @@ body[data-page="join"]::after {
 }
 
 .card-heading {
-  margin-bottom: 26px;
+  margin-bottom: 16px;
   text-align: center;
 }
 
 .eyebrow {
-  margin-bottom: 8px;
+  margin-bottom: 5px;
   background: linear-gradient(90deg, var(--pink), var(--purple), #42bfb1);
   background-clip: text;
   -webkit-background-clip: text;
@@ -150,8 +153,8 @@ body[data-page="join"]::after {
 }
 
 .card-heading h1 {
-  margin-bottom: 7px;
-  font-size: clamp(26px, 5vw, 32px);
+  margin-bottom: 4px;
+  font-size: clamp(24px, 5vw, 30px);
   font-weight: 800;
   line-height: 1.2;
 }
@@ -168,7 +171,7 @@ body[data-page="join"]::after {
 
 .profile-field {
   min-width: 0;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
   border: 0;
   text-align: center;
 }
@@ -182,18 +185,18 @@ body[data-page="join"]::after {
 
 .profile-field legend {
   width: 100%;
-  margin-bottom: 10px;
+  margin-bottom: 7px;
 }
 
 .profile-upload {
   display: flex;
-  width: 96px;
-  height: 96px;
+  width: 82px;
+  height: 82px;
   margin: 0 auto;
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
   border: 1px dashed rgba(116, 40, 244, 0.36);
   border-radius: 50%;
   background:
@@ -210,7 +213,7 @@ body[data-page="join"]::after {
 }
 
 .upload-icon {
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 300;
   line-height: 1;
 }
@@ -233,18 +236,18 @@ body[data-page="join"]::after {
 .field-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: 12px;
 }
 
 .field-group {
   min-width: 0;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
   text-align: left;
 }
 
 .field-group label {
   display: block;
-  margin-bottom: 7px;
+  margin-bottom: 5px;
 }
 
 .field-group label span {
@@ -253,7 +256,7 @@ body[data-page="join"]::after {
 
 .field-group input {
   width: 100%;
-  height: 48px;
+  height: 44px;
   padding: 0 15px;
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -276,11 +279,11 @@ body[data-page="join"]::after {
 }
 
 .helper-text {
-  min-height: 15px;
-  margin-top: 4px;
+  min-height: 14px;
+  margin-top: 3px;
   color: #d82b6f;
   font-size: 11px;
-  line-height: 15px;
+  line-height: 14px;
 }
 
 .profile-field .helper-text {
@@ -289,7 +292,7 @@ body[data-page="join"]::after {
 
 .signup-button {
   width: 100%;
-  height: 52px;
+  height: 46px;
   border: 0;
   border-radius: 16px;
   background: linear-gradient(135deg, var(--pink), var(--purple) 56%, var(--mint));
@@ -316,7 +319,7 @@ body[data-page="join"]::after {
 }
 
 .login-guide {
-  margin-top: 22px;
+  margin-top: 14px;
   color: var(--muted);
   font-size: 14px;
   text-align: center;
@@ -345,16 +348,16 @@ body[data-page="join"]::after {
 
   .page-main {
     align-items: flex-start;
-    padding: 72px 16px 24px;
+    padding: 64px 16px 20px;
   }
 
   .signup-card {
-    padding: 28px 21px 26px;
+    padding: 22px 20px 20px;
     border-radius: 20px;
   }
 
   .card-heading {
-    margin-bottom: 22px;
+    margin-bottom: 16px;
   }
 
   .field-grid {
@@ -363,8 +366,8 @@ body[data-page="join"]::after {
   }
 
   .profile-upload {
-    width: 88px;
-    height: 88px;
+    width: 76px;
+    height: 76px;
   }
 }
 
