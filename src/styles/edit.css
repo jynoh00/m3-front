@@ -199,7 +199,7 @@ textarea {
 
 .create-main {
   height: 100vh;
-  padding: 94px 22px 32px;
+  padding: 90px 22px 24px;
   overflow-y: auto;
   scrollbar-color: rgba(116, 40, 244, 0.24) transparent;
   scrollbar-width: thin;
@@ -207,11 +207,11 @@ textarea {
 
 .create-section {
   width: 100%;
-  max-width: 1080px;
-  margin: 22px auto 0;
-  padding: 28px;
+  max-width: 900px;
+  margin: 16px auto 0;
+  padding: 22px;
   border: 1px solid rgba(17, 17, 17, 0.08);
-  border-radius: 24px;
+  border-radius: 22px;
   background: var(--glass);
   box-shadow: 0 24px 64px rgba(30, 24, 44, 0.15);
   backdrop-filter: blur(18px);
@@ -220,7 +220,7 @@ textarea {
 
 .create-heading {
   display: flex;
-  margin-bottom: 25px;
+  margin-bottom: 18px;
   padding: 0 2px;
   align-items: flex-end;
   justify-content: space-between;
@@ -254,8 +254,8 @@ textarea {
 .create-layout {
   display: grid;
   align-items: start;
-  grid-template-columns: 320px minmax(0, 1fr);
-  gap: 24px;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 18px;
 }
 
 .moment-preview {
@@ -290,7 +290,7 @@ textarea {
 
 .preview-cover {
   position: relative;
-  height: 240px;
+  height: 200px;
   margin: 0 15px;
   overflow: hidden;
   border-radius: 17px;
@@ -311,9 +311,9 @@ textarea {
   transform: translate(-50%, -50%);
 }
 
-.preview-copy { padding: 20px 18px 18px; }
-.preview-copy h2 { overflow-wrap: anywhere; font-size: 20px; line-height: 1.4; }
-.preview-copy > p { min-height: 58px; margin-top: 9px; color: var(--muted); font-size: 12px; line-height: 1.6; white-space: pre-wrap; }
+.preview-copy { padding: 16px 16px 14px; }
+.preview-copy h2 { overflow-wrap: anywhere; font-size: 19px; line-height: 1.4; }
+.preview-copy > p { min-height: 48px; margin-top: 8px; color: var(--muted); font-size: 12px; line-height: 1.6; white-space: pre-wrap; }
 
 .preview-track {
   display: flex;
@@ -355,7 +355,7 @@ textarea {
 .editor-panel { min-width: 0; }
 
 .form-section {
-  padding: 21px;
+  padding: 18px;
   border: 1px solid rgba(17, 17, 17, 0.07);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.62);
@@ -365,7 +365,7 @@ textarea {
 
 .section-heading {
   display: flex;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
   align-items: center;
   gap: 11px;
 }
@@ -387,7 +387,7 @@ textarea {
 .section-heading h2 { font-size: 15px; }
 .section-heading p { margin-top: 3px; color: var(--muted); font-size: 10px; }
 
-.form-field + .form-field { margin-top: 14px; }
+.form-field + .form-field { margin-top: 12px; }
 
 .field-label-row {
   display: flex;
@@ -415,8 +415,8 @@ textarea {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.form-field input { height: 46px; padding: 0 14px; font-weight: 700; }
-.form-field textarea { min-height: 150px; padding: 14px; resize: vertical; line-height: 1.65; }
+.form-field input { height: 44px; padding: 0 14px; font-weight: 700; }
+.form-field textarea { min-height: 130px; padding: 14px; resize: vertical; line-height: 1.65; }
 
 .form-field input:focus,
 .form-field textarea:focus,
@@ -425,7 +425,27 @@ textarea {
   box-shadow: 0 0 0 4px rgba(235, 74, 160, 0.12);
 }
 
-.music-search-row { display: grid; grid-template-columns: minmax(0, 1fr) 76px; gap: 8px; }
+.music-mode-tabs { display: flex; margin-bottom: 10px; gap: 6px; }
+
+.music-mode-tabs button {
+  height: 32px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(17, 17, 17, 0.05);
+  color: var(--muted);
+  cursor: pointer;
+  flex: 1;
+  font-size: 11px;
+  font-weight: 800;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.music-mode-tabs button.is-active {
+  background: linear-gradient(135deg, var(--pink), var(--purple));
+  color: #fff;
+}
+
+.music-search-row { display: grid; grid-template-columns: minmax(0, 1fr) 92px; gap: 8px; }
 .music-search-row input { height: 44px; padding: 0 14px; }
 
 .music-search-row button {
@@ -436,6 +456,8 @@ textarea {
   cursor: pointer;
   font-size: 12px;
   font-weight: 800;
+  padding: 0 6px;
+  white-space: nowrap;
 }
 
 .music-search-row button:disabled { cursor: wait; opacity: 0.56; }
@@ -515,9 +537,9 @@ textarea {
 
 .helper-text { min-height: 18px; margin: 10px 3px 0; color: #d82b6f; font-size: 11px; }
 
-.form-actions { display: grid; margin-top: 17px; grid-template-columns: 112px 112px minmax(0, 1fr); gap: 9px; }
+.form-actions { display: grid; margin-top: 14px; grid-template-columns: 108px 108px minmax(0, 1fr); gap: 9px; }
 .cancel-button,
-.submit-button { display: flex; height: 48px; align-items: center; justify-content: center; border: 0; border-radius: 14px; font-size: 13px; font-weight: 900; text-decoration: none; }
+.submit-button { display: flex; height: 44px; align-items: center; justify-content: center; border: 0; border-radius: 14px; font-size: 13px; font-weight: 900; text-decoration: none; }
 .cancel-button { background: rgba(17, 17, 17, 0.065); color: rgba(17, 17, 17, 0.62); }
 .submit-button { background: linear-gradient(135deg, var(--pink), var(--purple) 58%, var(--mint)); box-shadow: 0 13px 28px rgba(116, 40, 244, 0.23); color: #fff; cursor: pointer; }
 .submit-button:disabled { cursor: wait; opacity: 0.62; }
@@ -532,8 +554,8 @@ textarea {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 860px) {
-  .create-layout { grid-template-columns: 260px minmax(0, 1fr); gap: 16px; }
-  .preview-cover { height: 190px; }
+  .create-layout { grid-template-columns: 240px minmax(0, 1fr); gap: 14px; }
+  .preview-cover { height: 170px; }
 }
 
 @media (max-width: 700px) {

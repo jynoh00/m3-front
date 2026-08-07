@@ -15,6 +15,7 @@ const normalizeTrack = (track) => {
     .filter(Boolean);
 
   return {
+    id: track.music_id,
     musicId: track.music_id,
     title: track.music_title || "제목 정보 없음",
     artists: artists.length ? artists : ["아티스트 정보 없음"],
@@ -25,6 +26,19 @@ const normalizeTrack = (track) => {
 
 const extractTracks = (result) =>
   Array.isArray(result?.data?.results) ? result.data.results.map(normalizeTrack) : [];
+
+// 백엔드 OembedResultDTO: { provider, music_title, cover_image, artist_names }
+const normalizeOembedTrack = (data) => {
+  const artists = (data?.artist_names || []).filter(Boolean);
+
+  return {
+    id: "oembed",
+    title: data?.music_title || "제목 정보 없음",
+    artists: artists.length ? artists : ["아티스트 정보 없음"],
+    artist: artists.length ? artists.join(", ") : "아티스트 정보 없음",
+    coverImage: data?.cover_image || FALLBACK_IMAGE,
+  };
+};
 
 // GET /posts/{id}/edit 응답(PostEditFormResponseDTO)의 music 필드도 동일한 MusicSearchResultDTO 모양이다.
 const trackFromPost = (post) => (post.music ? normalizeTrack(post.music) : null);
@@ -38,6 +52,7 @@ export default function MusicPostEditor({
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [searchMode, setSearchMode] = useState("keyword");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [selectedTrack, setSelectedTrack] = useState(null);
@@ -57,6 +72,7 @@ export default function MusicPostEditor({
   }, [initialPost]);
 
   useEffect(() => {
+    if (searchMode !== "keyword") return undefined;
     if (query.trim().length < 2) {
       setResults([]);
       setSearchStatus("두 글자 이상 입력하면 검색합니다.");
@@ -64,7 +80,21 @@ export default function MusicPostEditor({
     }
     const timer = window.setTimeout(() => void searchMusic(), 450);
     return () => window.clearTimeout(timer);
-  }, [query]);
+  }, [query, searchMode]);
+
+  const switchSearchMode = (nextMode) => {
+    if (nextMode === searchMode) return;
+    abortRef.current?.abort();
+    setSearchMode(nextMode);
+    setQuery("");
+    setResults([]);
+    setSearching(false);
+    setSearchStatus(
+      nextMode === "link"
+        ? "유튜브 또는 스포티파이 링크를 입력해주세요."
+        : "두 글자 이상 입력하면 검색합니다.",
+    );
+  };
 
   const searchMusic = async () => {
     const keyword = query.trim();
@@ -100,6 +130,40 @@ export default function MusicPostEditor({
       if (abortRef.current === controller) setSearching(false);
     }
   };
+
+  const fetchOembedLink = async () => {
+    const url = query.trim();
+    if (!url) {
+      setSearchStatus("유튜브 또는 스포티파이 링크를 입력해주세요.");
+      return;
+    }
+
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setSearching(true);
+    setSearchStatus("링크에서 음악 정보를 가져오는 중입니다.");
+
+    try {
+      const result = await apiRequest("/musics/oembed", {
+        method: "POST",
+        body: JSON.stringify({ url }),
+        signal: controller.signal,
+      });
+      const track = normalizeOembedTrack(result.data);
+      setResults([track]);
+      setSearchStatus(`"${track.title}"을 찾았습니다. 아래에서 선택해주세요.`);
+    } catch (requestError) {
+      if (requestError.name !== "AbortError") {
+        setResults([]);
+        setSearchStatus(describeError(requestError, "링크에서 음악 정보를 가져오지 못했습니다."));
+      }
+    } finally {
+      if (abortRef.current === controller) setSearching(false);
+    }
+  };
+
+  const runSearch = () => void (searchMode === "link" ? fetchOembedLink() : searchMusic());
 
   const selectTrack = (track) => {
     setSelectedTrack(track);
@@ -202,13 +266,15 @@ export default function MusicPostEditor({
               }}
             />
             <MusicSearchSection
+              mode={searchMode}
               query={query}
               results={results}
               selectedTrack={selectedTrack}
               searchStatus={searchStatus}
               searching={searching}
+              onModeChange={switchSearchMode}
               onQueryChange={setQuery}
-              onSearch={() => void searchMusic()}
+              onSearch={runSearch}
               onSelectTrack={selectTrack}
               onClearTrack={() => setSelectedTrack(null)}
             />

@@ -29,6 +29,9 @@ const MESSAGES = {
   // 음악
   music_not_selected: "음악을 선택해주세요.",
   search_keyword_required: "검색어를 입력해주세요.",
+  music_url_required: "링크를 입력해주세요.",
+  unsupported_music_provider: "지원하지 않는 링크입니다. 유튜브 또는 스포티파이 링크를 입력해주세요.",
+  oembed_fetch_failed: "링크에서 음악 정보를 가져오지 못했습니다. 링크를 확인해주세요.",
 
   // 댓글
   comment_not_found: "존재하지 않는 댓글입니다.",
